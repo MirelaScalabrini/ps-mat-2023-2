@@ -8,26 +8,50 @@ import Box from '@mui/material/Box'
 import myfetch from '../utils/myfetch'
 import Waiting from '../components/ui/Waiting'
 import Notification from '../components/ui/Notification'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
+import ConfirmDialog from '../components/ui/ConfirmDialog'
+import InputMask from 'react-input-mask'
+import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers'
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
+import ptLocale from 'date-fns/locale/pt-BR'
+import { parseISO } from 'date-fns'
 
 export default function CustomersForm() {
 
   const navigate = useNavigate()
+  const params = useParams()
+
+  const customarDefaults = {
+    name: '',
+    ident_document: '',
+    birth_date: '',
+    street_name: '',
+    house_number: '',
+    neighborhood: '',
+    municipality: '',
+    state: '',
+    phone: '',
+    email: '' 
+  }
 
   const [state, setState] = React.useState({
-    customer: {},    // Objeto vazio
+    customer: customarDefaults,   
     showWaiting: false,
     notification: {
       show: false,
       severity: 'success',
       message: ''
-    }
+    },
+    openDialog: false,
+    isFormModified: false
   })
 
   const {
     customer,
     showWaiting,
-    notification
+    notification,
+    openDialog,
+    isFormModified 
   } = state
 
   const states = [
@@ -40,18 +64,61 @@ export default function CustomersForm() {
     { label: 'São Paulo', value: 'SP' }
   ]
 
+  const maskFormatChars = {
+      '9': '[0-9]',
+      'a': '[A-Za-z]',
+      '*': '[A-Za-z0-9]',
+      '_': '[\s0-9]' // um espaço em branco ou um dígito
+  }
+
+  //useEffect com vetor de dependências vazio. Será executado uma vez quando o componente for carregado
+  React.useEffect(() => {
+    // Verifica de existe o parâmetro id na rota. Caso exista chama a função
+    if(params.id) fetchData()
+  }, [])
+
+  async function fetchData() {
+    // Exibe 
+    setState({...state, showWaiting: true})
+    try {
+      const result = await myfetch.get(`customer/${params.id}`)
+
+      result.birth_date = parseISO(result.birth_date)
+
+      setState({...state, showWaiting: false, customer: result})
+    }
+    catch(error){
+      setState({ ...state, 
+        showWaiting: false, // Esconde o backdrop
+        notification: {
+          show: true,
+          severity: 'error',
+          message: 'ERRO: ' + error.message
+        } 
+      })  
+    }
+  }
+
   function handleFieldChange(event) {
     console.log(event)
     const newCustomer = { ...customer }
     newCustomer[event.target.name] = event.target.value
-    setState({ ...state, customer: newCustomer })
+
+    
+    setState({ ...state, 
+      customer: newCustomer, 
+      isFormModified: true  // O fromulário foi alterado
+     })
   }
 
   async function handleFormSubmit(event) {
     setState({ ...state, showWaiting: true }) // Exibe o backdrop
     event.preventDefault(false)   // Evita o recarregamento da página
     try {
-      const result = await myfetch.post('customer', customer)
+      let result 
+      if(customer.id) result = await myfetch.put(`customer/${customer.id}`, customer)
+      else result = await myfetch.post('customer', customer)
+      
       setState({ ...state, 
         showWaiting: false, // Esconde o backdrop
         notification: {
@@ -84,11 +151,43 @@ export default function CustomersForm() {
     }})
 
     // Volta para a página de listagem
-    if(status === 'success') navigate('/customers')
+    if(status === 'success') navigate('..', { relative: 'path' })
+  }
+
+  function handleBackButtonClose(event) {
+    // Se o formulário tiver sido modificado, abre a caixa de diálogo
+    // para perguntar se quer mesmo voltar, perdendo as alterações
+    if(isFormModified) setState({ ...state, openDialog: true })
+
+    // Senão, volta à página de listagem
+    else navigate('..', { relative: 'path' })
+  }
+
+  function handleDialogClose(answer) {
+
+    // Fechamos a caixa de diálogo
+    setState({ ...state, openDialog: false })
+
+    // Se o usuário tiver respondido quer quer voltar à página
+    // de listagem mesmo com alterações pendentes, faremos a
+    // vontade dele
+    if(answer) navigate('..', { relative: 'path' })
   }
 
   return(
     <>
+
+      <ConfirmDialog
+        title="Atenção"
+        open={openDialog}
+        onClose={handleDialogClose}
+      >
+        Há alterações que ainda não foram salvas. Deseja realmente voltar?
+      </ConfirmDialog>
+
+      <Waiting show={showWaiting} />
+
+  
 
       <Waiting show={showWaiting} />
 
@@ -116,29 +215,38 @@ export default function CustomersForm() {
             fullWidth
             value={customer.name}
             onChange={handleFieldChange}
+            autoFocus
           />
 
-          <TextField 
-            id="ident_document"
-            name="ident_document" 
-            label="CPF" 
-            variant="filled"
-            required
-            fullWidth
+          <InputMask
+            mask="999.999.999-99"
+            maskChar=" "
             value={customer.ident_document}
             onChange={handleFieldChange}
-          />
+          > 
+            { 
+              () => <TextField
+                id="ident_document"
+                name="ident_document" 
+                label="CPF" 
+                variant="filled"
+                required
+                fullWidth
+              />
+            }
+          </InputMask>
 
-          <TextField 
-            id="birth_date"
-            name="birth_date" 
-            label="Data de nascimento" 
-            variant="filled"
-            fullWidth
-            value={customer.birth_date}
-            onChange={handleFieldChange}
-          />
-
+          <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptLocale}>
+            <DatePicker
+              label="Data de nascimento"
+              value={customer.birth_date}
+              onChange={ value => 
+                handleFieldChange({ target: { name: 'birth_date', value } }) 
+              }
+              slotProps={{ textField: { variant: 'filled', fullWidth: true } }}
+            />
+          </LocalizationProvider>
+        
           <TextField 
             id="street_name"
             name="street_name" 
@@ -212,17 +320,27 @@ export default function CustomersForm() {
               </MenuItem>
             ))}
           </TextField>
-
-          <TextField 
-            id="phone"
-            name="phone" 
-            label="Celular / Telefone de contato" 
-            variant="filled"
-            required
-            fullWidth
+          
+          <InputMask
+            mask="(99) _9999-9999"
+            formatChars={maskFormatChars}
+            maskChar="_"
             value={customer.phone}
             onChange={handleFieldChange}
-          />
+          > 
+           {
+            () => <TextField 
+                id="phone"
+                name="phone" 
+                label="Celular / Telefone de contato" 
+                variant="filled"
+                required
+                fullWidth
+                value={customer.phone}
+                onChange={handleFieldChange}
+              />
+            }
+          </InputMask>
 
           <TextField 
             id="email"
@@ -243,12 +361,10 @@ export default function CustomersForm() {
 
         <Toolbar sx={{ justifyContent: "space-around" }}>
           <Button variant="contained" color="secondary" type="submit">Salvar</Button>
-          <Button variant="outlined">Voltar</Button>
+          <Button variant="outlined" onClick={handleBackButtonClose}>Voltar</Button>
         </Toolbar>
       
       </form>
-    </>
-
-    
+    </> 
   )
 }
