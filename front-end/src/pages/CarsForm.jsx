@@ -16,7 +16,6 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 import ptLocale from 'date-fns/locale/pt-BR'
 import { parseISO } from 'date-fns'
 
-import FormGroup from '@mui/material/FormGroup'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import Switch from '@mui/material/Switch'
 
@@ -25,19 +24,19 @@ export default function CarsForm() {
   const navigate = useNavigate()
   const params = useParams()
 
-  const carsDefaults = {
+  const carDefaults = {
     brand: '',
     model: '',
     color: '',
     year_manufacture: '',
-    imported: '',
+    imported: false,
     plates: '',
     selling_date: '',
     selling_price: ''
   }
 
   const [state, setState] = React.useState({
-    car: carsDefaults,   
+    car: carDefaults,   
     showWaiting: false,
     notification: {
       show: false,
@@ -90,6 +89,8 @@ export default function CarsForm() {
     try {
       const result = await myfetch.get(`car/${params.id}`)
 
+      result.selling_date = parseISO(result.selling_date)
+
       setState({...state, showWaiting: false, car: result})
     }
     catch(error){
@@ -107,8 +108,9 @@ export default function CarsForm() {
   function handleFieldChange(event) {
     console.log(event)
     const newCar = { ...car }
-    newCar[event.target.name] = event.target.value
-
+    const value =
+      event.target.name === 'imported' ? event.target.checked : event.target.value;
+    newCar[event.target.name] = value;     
     
     setState({ ...state, 
       car: newCar, 
@@ -155,7 +157,7 @@ export default function CarsForm() {
       message: ''
     }})
 
-    // Volta para a página de listagem dos carros
+    // Volta para a página de listagem
     if(status === 'success') navigate('..', { relative: 'path' })
   }
 
@@ -164,7 +166,7 @@ export default function CarsForm() {
     // para perguntar se quer mesmo voltar, perdendo as alterações
     if(isFormModified) setState({ ...state, openDialog: true })
 
-    // Senão, volta à página de listagem de carros
+    // Senão, volta à página de listagem
     else navigate('..', { relative: 'path' })
   }
 
@@ -173,7 +175,7 @@ export default function CarsForm() {
     // Fechamos a caixa de diálogo
     setState({ ...state, openDialog: false })
 
-    // Se o usuário tiver respondido que quer voltar à página
+    // Se o usuário tiver respondido quer quer voltar à página
     // de listagem mesmo com alterações pendentes, faremos a
     // vontade dele
     if(answer) navigate('..', { relative: 'path' })
@@ -192,10 +194,6 @@ export default function CarsForm() {
 
       <Waiting show={showWaiting} />
 
-  
-
-      <Waiting show={showWaiting} />
-
       <Notification
         show={notification.show}
         severity={notification.severity}
@@ -211,29 +209,29 @@ export default function CarsForm() {
 
         <Box className="form-fields">
         
-          <TextField 
+         <TextField 
             id="brand"
             name="brand" 
             label="Marca" 
             variant="filled"
             required
             fullWidth
-            value={car.name}
+            value={car.brand}
             onChange={handleFieldChange}
             autoFocus
+         />
+
+          <TextField
+            id="model"
+            name="model" 
+            label="Modelo" 
+            variant="filled"
+            required
+            fullWidth
+            value={car.model}
+            onChange={handleFieldChange}
           />
- 
-            { 
-              () => <TextField
-                id="model"
-                name="model" 
-                label="Modelo" 
-                variant="filled"
-                required
-                fullWidth
-              />
-            }
-        
+
           <TextField 
             id="color"
             name="color" 
@@ -244,7 +242,7 @@ export default function CarsForm() {
             value={car.color}
             onChange={handleFieldChange}
           />
-
+        
           <TextField 
             id="year_manufacture"
             name="year_manufacture" 
@@ -256,53 +254,56 @@ export default function CarsForm() {
             value={car.year_manufacture}
             onChange={handleFieldChange}
           >
-            {states.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
+             {states.map((option) => (
+              <MenuItem key={option.label} value={option.label}>
                 {option.label}
               </MenuItem>
             ))}
           </TextField>
 
-          <TextField 
-            id="imported"
-            name="Imported" 
-            label="É importado?" 
-            variant="filled"
-            fullWidth
-            value={car.imported}
-            onChange={handleFieldChange}
+          <FormControlLabel
+            control={
+              <Switch
+                id="imported"
+                name="imported"
+                value={car.imported}
+                onChange={handleFieldChange}
+              />
+            }
+            label="É importado?"
+            className="switch-label"
           />
 
           <InputMask
-            mask="AAA-9A99"
-            maskChar="9"
+            mask="aaa-9a99"
+            formatChars={maskFormatChars}
+            maskChar=" "
             value={car.plates}
             onChange={handleFieldChange}
-          > 
-            { 
+          >
+            {
               () => <TextField
                 id="plates"
-                name="plates" 
-                label="Placa" 
+                name="plates"
+                label="Placa"
                 variant="filled"
                 required
                 fullWidth
-                value={car.plates}
-                onChange={handleFieldChange}
-            />
+              />
             }
           </InputMask>
-          
-          <TextField 
-            id="selling_date"
-            name="selling_date" 
-            label="Data da venda" 
-            variant="filled"
-            fullWidth
-            value={car.selling_date}
-            onChange={handleFieldChange}
-          />
 
+          <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptLocale}>
+            <DatePicker
+              label="Data de venda"
+              value={car.selling_date}
+              onChange={ value => 
+                handleFieldChange({ target: { name: 'selling_date', value } }) 
+              }
+              slotProps={{ textField: { variant: 'filled', fullWidth: true } }}
+            />
+          </LocalizationProvider>
+          
           <TextField
             id="selling_price"
             name="selling_price"
@@ -311,9 +312,10 @@ export default function CarsForm() {
             fullWidth
             value={car.selling_price}
             onChange={handleFieldChange}
+            type="number"
           >
           </TextField>
-
+          
         </Box>
 
         <Box sx={{ fontFamily: 'monospace' }}>

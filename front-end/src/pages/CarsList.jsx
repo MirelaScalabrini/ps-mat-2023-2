@@ -118,7 +118,24 @@ export default function CarsList() {
       headerName: 'Placa',
       width: 300
     },
-    
+    {
+      field: 'selling_date',
+      headerName: 'Data da venda',
+      align: 'center',
+      headerAlign: 'center',
+      width: 100,
+      valueFormatter: params => {
+        if(params.value) return format(new Date(params.value), 'dd/MM/yyyy')
+        else return ''
+      }
+    },
+    {
+      field: 'selling_price',
+      headerName: 'Valor do carro',
+      align: 'center',
+      headerAlign: 'center',
+      width: 150
+    },
     {
       field: 'edit',
       headerName: 'Editar',

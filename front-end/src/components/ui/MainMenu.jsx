@@ -49,7 +49,7 @@ export default function MainMenu() {
           Página inicial
         </MenuItem>
         
-        <MenuItem 
+        <MenuItem divider
           onClick={handleClose}
           component={Link}
           to="/customers"

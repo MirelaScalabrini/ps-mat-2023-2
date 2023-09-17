@@ -28,3 +28,13 @@
   width: 600px;
   margin-bottom: 36px;
 }
+.switch-label {
+  display: flex;
+  flex-direction: column; /* Coluna para alinhar o Switch abaixo do rótulo */
+  width: 40%; /* Defina a largura desejada */
+  margin-left: 0 auto; /* Empurra o campo para a direita */
+  margin-bottom: 16px; /* Adicione margem inferior para separar dos outros campos */
+  flex-wrap: wrap;
+}
+
+
