@@ -31,8 +31,7 @@ export default function CarsForm() {
     year_manufacture: '',
     imported: false,
     plates: '',
-    selling_date: '',
-    selling_price: ''
+    selling_date: null
   }
 
   const [state, setState] = React.useState({
@@ -89,8 +88,11 @@ export default function CarsForm() {
     try {
       const result = await myfetch.get(`car/${params.id}`)
 
-      result.selling_date = parseISO(result.selling_date)
-
+      if (result.selling_date) {
+        result.selling_date = parseISO(result.selling_date);
+      } else {
+        result.selling_date = null;
+      }
       setState({...state, showWaiting: false, car: result})
     }
     catch(error){
@@ -109,8 +111,11 @@ export default function CarsForm() {
     console.log(event)
     const newCar = { ...car }
     const value =
-      event.target.name === 'imported' ? event.target.checked : event.target.name === 'year_manufacture'
-      ? parseInt(event.target.value) : event.target.value; // Transforma a data de fabricação em inteiro
+      event.target.name === 'imported' /*Verifica se é importado*/ ? event.target.checked : event.target.name === 'year_manufacture' // Transforma a data de fabricação em inteiro
+      ? parseInt(event.target.value) : event.target.name === 'selling_price'
+      ? event.target.value.trim() === '' // Verifica se é uma string vazia se não 
+        ? null // Define como null ao editar e apagar o valor caso tenha preenchido
+        : event.target.value : event.target.value; 
     newCar[event.target.name] = value;     
     
     setState({ ...state, 
@@ -306,15 +311,15 @@ export default function CarsForm() {
           </LocalizationProvider>
           
           <TextField
-            id="selling_price"
-            name="selling_price"
-            label="Valor do carro"
-            variant="filled"
-            fullWidth
-            value={car.selling_price}
-            onChange={handleFieldChange}
-            type="number"
-          >
+          id="selling_price"
+          name="selling_price"
+          label="Valor do carro"
+          variant="filled"
+          fullWidth
+          value={car.selling_price !== null ? car.selling_price : ''}
+          onChange={handleFieldChange}
+          type="number"
+        >
           </TextField>
           
         </Box>
