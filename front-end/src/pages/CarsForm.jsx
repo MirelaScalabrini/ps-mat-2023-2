@@ -24,7 +24,7 @@ export default function CarsForm() {
   const navigate = useNavigate()
   const params = useParams()
 
-  const carDefaults = {
+  const customarDefaults = {
     brand: '',
     model: '',
     color: '',
@@ -36,7 +36,7 @@ export default function CarsForm() {
   }
 
   const [state, setState] = React.useState({
-    car: carDefaults,   
+    car: customarDefaults,   
     showWaiting: false,
     notification: {
       show: false,
@@ -55,7 +55,7 @@ export default function CarsForm() {
     isFormModified 
   } = state
 
-  const states = [
+  const datas = [
     { label: '1940' }, { label: '1941' }, { label: '1942' }, { label: '1943' }, { label: '1944' }, { label: '1945' }, { label: '1946' },
     { label: '1947' }, { label: '1948' }, { label: '1949' }, { label: '1950' }, { label: '1951' }, { label: '1952' }, { label: '1953' },
     { label: '1954' }, { label: '1955' }, { label: '1956' }, { label: '1957' }, { label: '1958' }, { label: '1959' }, { label: '1960' }, 
@@ -68,7 +68,7 @@ export default function CarsForm() {
     { label: '2003' }, { label: '2004' }, { label: '2005' }, { label: '2006' }, { label: '2007' }, { label: '2008' }, { label: '2009' }, 
     { label: '2010' }, { label: '2011' }, { label: '2012' }, { label: '2013' }, { label: '2014' }, { label: '2015' }, { label: '2016' },
     { label: '2017' }, { label: '2018' }, { label: '2019' }, { label: '2020' }, { label: '2021' }, { label: '2022' }, { label: '2023' }
-  ]
+  ]             
 
   const maskFormatChars = {
       '9': '[0-9]',
@@ -109,7 +109,8 @@ export default function CarsForm() {
     console.log(event)
     const newCar = { ...car }
     const value =
-      event.target.name === 'imported' ? event.target.checked : event.target.value;
+      event.target.name === 'imported' ? event.target.checked : event.target.name === 'year_manufacture'
+      ? parseInt(event.target.value) : event.target.value; // Transforma a data de fabricação em inteiro
     newCar[event.target.name] = value;     
     
     setState({ ...state, 
@@ -254,7 +255,7 @@ export default function CarsForm() {
             value={car.year_manufacture}
             onChange={handleFieldChange}
           >
-             {states.map((option) => (
+             {datas.map((option) => (
               <MenuItem key={option.label} value={option.label}>
                 {option.label}
               </MenuItem>
