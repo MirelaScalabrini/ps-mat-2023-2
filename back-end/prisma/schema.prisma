@@ -36,3 +36,11 @@ model Customer {
   phone           String
   email           String      @unique
 }
+model User {
+  id             Int         @id @default(autoincrement())
+  first_name     String      // Primeiro nome
+  last_name      String      // Sobrenome
+  email          String      @unique
+  password       String      // Senha
+  is_admin       Boolean     @default(false)
+}
