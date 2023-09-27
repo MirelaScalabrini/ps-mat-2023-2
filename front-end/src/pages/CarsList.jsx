@@ -48,7 +48,7 @@ export default function CarsList() {
     // Exibe a tela de espera
     setState({ ...state, showWaiting: true, openDialog: false })
     try {
-      const result = await myfetch.get('car')
+      const result = await myfetch.get('car?related=1')
 
       let notif = {
         show: false,
@@ -134,7 +134,22 @@ export default function CarsList() {
       headerName: 'Valor do carro',
       align: 'center',
       headerAlign: 'center',
-      width: 150
+      width: 150,
+      valueFormatter: params => {
+        if(params.value) return Number(params.value).toLocaleString(
+          'pt-BR', // Português do Basil
+          { style: 'currency', currency: 'BRL'} // Moeda: real brasileiro 
+        )
+        else return ''
+      }
+    },
+    {
+      field: 'customer_id',
+      headerName: 'Cliente adquirente',
+      width: 250,
+      valueGetter: params => {
+        return params.row?.customer?.name
+      }
     },
     {
       field: 'edit',

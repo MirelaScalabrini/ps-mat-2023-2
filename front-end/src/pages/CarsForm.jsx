@@ -18,24 +18,27 @@ import { parseISO } from 'date-fns'
 
 import FormControlLabel from '@mui/material/FormControlLabel'
 import Switch from '@mui/material/Switch'
+import  InputAdornment  from '@mui/material/InputAdornment'
 
 export default function CarsForm() {
 
   const navigate = useNavigate()
   const params = useParams()
 
-  const customarDefaults = {
+  const carDefaults = {
     brand: '',
     model: '',
     color: '',
     year_manufacture: '',
     imported: false,
     plates: '',
-    selling_date: null
+    selling_date: null,
+    customer_id: ''
   }
 
   const [state, setState] = React.useState({
-    car: customarDefaults,   
+    car: carDefaults, 
+    customers: [],  
     showWaiting: false,
     notification: {
       show: false,
@@ -48,52 +51,49 @@ export default function CarsForm() {
 
   const {
     car,
+    customers,
     showWaiting,
     notification,
     openDialog,
     isFormModified 
   } = state
 
-  const datas = [
-    { label: '1940' }, { label: '1941' }, { label: '1942' }, { label: '1943' }, { label: '1944' }, { label: '1945' }, { label: '1946' },
-    { label: '1947' }, { label: '1948' }, { label: '1949' }, { label: '1950' }, { label: '1951' }, { label: '1952' }, { label: '1953' },
-    { label: '1954' }, { label: '1955' }, { label: '1956' }, { label: '1957' }, { label: '1958' }, { label: '1959' }, { label: '1960' }, 
-    { label: '1961' }, { label: '1962' }, { label: '1963' }, { label: '1964' }, { label: '1965' }, { label: '1966' }, { label: '1967' }, 
-    { label: '1968' }, { label: '1969' }, { label: '1970' }, { label: '1971' }, { label: '1972' }, { label: '1973' }, { label: '1974' },
-    { label: '1975' }, { label: '1976' }, { label: '1977' }, { label: '1978' }, { label: '1979' }, { label: '1980' }, { label: '1981' }, 
-    { label: '1982' }, { label: '1983' }, { label: '1984' }, { label: '1985' }, { label: '1986' }, { label: '1987' }, { label: '1988' },
-    { label: '1989' }, { label: '1990' }, { label: '1991' }, { label: '1992' }, { label: '1993' }, { label: '1994' }, { label: '1995' }, 
-    { label: '1996' }, { label: '1997' }, { label: '1998' }, { label: '1999' }, { label: '2000' }, { label: '2001' }, { label: '2002' },
-    { label: '2003' }, { label: '2004' }, { label: '2005' }, { label: '2006' }, { label: '2007' }, { label: '2008' }, { label: '2009' }, 
-    { label: '2010' }, { label: '2011' }, { label: '2012' }, { label: '2013' }, { label: '2014' }, { label: '2015' }, { label: '2016' },
-    { label: '2017' }, { label: '2018' }, { label: '2019' }, { label: '2020' }, { label: '2021' }, { label: '2022' }, { label: '2023' }
-  ]             
+  const anos = []             
+
+  // Anos, do mais recente ao mais antigo
+  for(let ano = 2023; ano >= 1940; ano--) anos.push(ano)
 
   const maskFormatChars = {
       '9': '[0-9]',
       'a': '[A-Za-z]',
       '*': '[A-Za-z0-9]',
+      '@': '[A-Ja-j0-9]', // Aceita letras de A a J (maiúculas ou minúsculas) e digitos
       '_': '[\s0-9]' // um espaço em branco ou um dígito
   }
 
   //useEffect com vetor de dependências vazio. Será executado uma vez quando o componente for carregado
   React.useEffect(() => {
     // Verifica de existe o parâmetro id na rota. Caso exista chama a função
-    if(params.id) fetchData()
+    fetchData(params.id)
   }, [])
 
-  async function fetchData() {
+  async function fetchData(isUpdating) {
     // Exibe 
     setState({...state, showWaiting: true})
     try {
-      const result = await myfetch.get(`car/${params.id}`)
-
-      if (result.selling_date) {
-        result.selling_date = parseISO(result.selling_date);
-      } else {
-        result.selling_date = null;
+      let car = carDefaults
+      if(isUpdating){
+        car = await myfetch.get(`car/${params.id}`)
+        car.selling_date = parseISO(car.selling_date)
       }
-      setState({...state, showWaiting: false, car: result})
+
+      // Busca a listagem de clientes para preencher o componente de escolha
+      let customers = await myfetch.get('customer')
+
+      // Cria um cliente "fake" que permite não selecionar nenhum cliente
+      customers.unshift({id: null, name: '(Nenhum cliente)'})
+
+      setState({...state, showWaiting: false, car, customers})
     }
     catch(error){
       setState({ ...state, 
@@ -249,42 +249,42 @@ export default function CarsForm() {
             onChange={handleFieldChange}
           />
         
-          <TextField 
+        <TextField
             id="year_manufacture"
             name="year_manufacture" 
             label="Ano de fabricação"
-            select  
-            variant="filled"
-            required
+            select
+            defaultValue=""
             fullWidth
+            variant="filled"
+            helperText="Selecione o ano"
             value={car.year_manufacture}
             onChange={handleFieldChange}
           >
-             {datas.map((option) => (
-              <MenuItem key={option.label} value={option.label}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </TextField>
+          {anos.map((option) => (
+            <MenuItem key={option} value={option}>
+              {option}
+            </MenuItem>
+          ))}
+        </TextField>
 
-          <FormControlLabel
-            control={
-              <Switch
-                id="imported"
-                name="imported"
-                value={car.imported}
-                onChange={handleFieldChange}
-              />
-            }
-            label="É importado?"
-            className="switch-label"
-          />
+          <FormControlLabel 
+            className="MuiFormControl-root"
+            sx={{ justifyContent: "start" }}
+            onChange={handleFieldChange} 
+            control={<Switch defaultChecked />} 
+            label="Importado" 
+            id="imported" 
+            name="imported" 
+            labelPlacement="start" 
+            checked={car.imported}
+        />
 
           <InputMask
-            mask="aaa-9a99"
+            mask="aaa-9@99"
             formatChars={maskFormatChars}
             maskChar=" "
-            value={car.plates}
+            value={car.plates.toUpperCase()} /* Placas em maiúsculas*/
             onChange={handleFieldChange}
           >
             {
@@ -316,11 +316,31 @@ export default function CarsForm() {
           label="Valor do carro"
           variant="filled"
           fullWidth
+          InputProps={{ startAdornment:<InputAdornment position='start'>R$</InputAdornment> }}
+          type="number"
           value={car.selling_price !== null ? car.selling_price : ''}
           onChange={handleFieldChange}
-          type="number"
         >
           </TextField>
+
+          <TextField
+            id="customer_id"
+            name="customer_id"
+            label="Cliente adquirente"
+            select
+            defaultValue=""
+            fullWidth
+            variant="filled"
+            helperText="Selecione o cliente"
+            value={car.customer_id}
+            onChange={handleFieldChange}
+          >
+          {customers.map(customer => (
+            <MenuItem key={customer.id} value={customer.id}>
+              {customer.name}
+            </MenuItem>
+          ))}
+        </TextField>
           
         </Box>
 

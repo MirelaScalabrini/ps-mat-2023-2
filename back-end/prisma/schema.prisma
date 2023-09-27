@@ -11,15 +11,17 @@ datasource db {
 }
 
 model Car {
-  id               Int @id @default(autoincrement())
+  id               Int       @id @default(autoincrement())
   brand            String
   model            String
   color            String
   year_manufacture Int 
-  imported         Boolean @default(false)
-  plates           String  @unique   //Índice único
-  selling_date     DateTime?        //Campo anulável
-  selling_price    Decimal?         //Campo anulável
+  imported         Boolean   @default(false)
+  plates           String    @unique   //Índice único
+  selling_date     DateTime?          //Campo anulável
+  selling_price    Decimal?           //Campo anulável
+  customer_id      Int?              // Opcional 
+  customer         Customer? @relation(fields: [customer_id], references: [id])
 }
 
 model Customer {
@@ -35,6 +37,7 @@ model Customer {
   state           String
   phone           String
   email           String      @unique
+  cars            Car[]      // Carros adquiridos pelo cliente
 }
 model User {
   id             Int         @id @default(autoincrement())
