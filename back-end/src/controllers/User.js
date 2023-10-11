@@ -146,7 +146,7 @@ controller.create = async function(req, res) {
           secure: true,
           sameSite: 'None',
           path: '/',
-          maxAge: 24 * 60 * 60  // 24h
+          maxAge: 24 * 60 * 60 * 1000 // 24h
         })
   
         // console.log(token)
@@ -175,5 +175,11 @@ controller.create = async function(req, res) {
     // HTTP 204: No content
     res.status(204).end()
   }
+
+  // Retorna informações sobre i usuário logado, ou 403 caso não haja usuário logado
+controller.loggedin = async function(req, res) {
+  if(req.loggedInUser) res.send(req.loggedInUser)
+  else res.status(403).end()
+}
   
   export default controller

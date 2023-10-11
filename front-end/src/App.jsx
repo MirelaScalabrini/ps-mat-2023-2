@@ -11,6 +11,8 @@ import Box from '@mui/material/Box'
 import FooterBar from './components/ui/FooterBar'
 import CssBaseline from '@mui/material/CssBaseline'
 
+import Login from './pages/Login'
+
 import Homepage from './pages/Homepage'
 import CustomersList from './pages/CustomersList'
 import CustomersForm from './pages/CustomersForm'
@@ -35,6 +37,7 @@ function App() {
 
               <Routes>
                 <Route path="/" element={ <Homepage /> } />
+                <Route path="/login" element={ <Login /> } />
                 <Route path="/customers" element={ <CustomersList /> } />
                 <Route path="/customers/new" element={ <CustomersForm /> } />
                 <Route path="/customers/:id" element={ <CustomersForm /> } />
