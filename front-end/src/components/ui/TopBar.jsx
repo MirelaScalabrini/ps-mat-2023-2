@@ -8,6 +8,7 @@ import myfetch from '../../utils/myfetch'
 import Buttom from '@mui/material/Button'
 import PersonIcon from '@mui/icons-material/Person'
 import { useLocation, useNavigate } from 'react-router-dom'
+import UserMenu from './UserMenu'
 
 export default function TopBar() {
 
@@ -28,6 +29,7 @@ export default function TopBar() {
       setLoggedInUser(user)
     }
     catch(error) {
+      setLoggedInUser(null)
       // se não foi possivel obter os dados do usuário autenticado, redireciona para a página de login
       if(location.pathname !== '/login') navigate('/login')
     }
@@ -42,13 +44,9 @@ export default function TopBar() {
 
           <img src={logo} alt="Logotipo Karangos" style={{ width: '300px' }} />
         </Toolbar>
-        <Buttom 
-          variant="text"
-          color="secondary"
-          startIcon={<PersonIcon />}
-        >
-           { loggedInUser && (loggedInUser.first_name + ' ' + loggedInUser.last_name) }
-        </Buttom>
+        
+         <UserMenu user={loggedInUser} />
+        
       </AppBar>
     </Box>
   );
