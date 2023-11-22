@@ -40,4 +40,7 @@ app.use('/customer', customerRouter)
 import userRouter from './routes/User.js'
 app.use('/user', userRouter)
 
+import salespersorRouter from './routes/salesperson.js'
+app.use('/sales', salespersorRouter)
+
 export default app;
